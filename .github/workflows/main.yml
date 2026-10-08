@@ -1,0 +1,40 @@
+name: Build AI DJ APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Unzip Android project
+        run: |
+          mkdir -p build-src
+          unzip -q AI_DJ_Android_MVP_0.2.zip -d build-src
+          echo "PROJECT_DIR=$(find build-src -name settings.gradle.kts -printf '%h\n' | head -1)" >> $GITHUB_ENV
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+
+      - name: Build APK
+        run: gradle -p "$PROJECT_DIR" assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-DJ-APK
+          path: '**/build/outputs/apk/debug/*.apk'
